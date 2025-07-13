@@ -6,7 +6,7 @@ const $ = Datastar<Signals>();
 export default () => (
   <>
     <h1>Counter</h1>
-    <div role="group" data-signals-counter="0">
+    <div role="group" data-signals-counter="0" style={{ alignItems: "center" }}>
       <button data-on-click="$counter -= 1">-</button>
       <h2 style={{ textAlign: "center" }} data-text="$counter" />
       <button data-on-click="$counter += 1">+</button>

@@ -9,7 +9,7 @@ body {
     display: grid;
     height: 100dvh;
     grid-template:
-        "sidebar document" 1fr / 260px 1fr;
+        "sidebar document" 1fr / 240px 1fr;
 }
 
 #sidebar {
@@ -35,7 +35,7 @@ main {
 }
 
 
-@media (max-width: 980px) {
+@media (max-width: 1080px) {
     body {
         grid-template:
             "sidebar document" 1fr / 200px 1fr;
@@ -45,28 +45,8 @@ main {
 @media (max-width: 768px) {
 
     /* On mobile, main becomes single column */
-    main {
-        grid-template: "content" 1fr / 1fr;
-    }
-
-    /* On mobile, asides become off-canvas panels */
-    aside {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        width: 18rem;
-        padding: var(--pico-spacing);
-        background: var(--pico-surface, Canvas);
-        transition: transform .3s;
-        z-index: 900;
-        transform: translateX(-100%);
-    }
-
-    /* Datastar will add this class to show panels */
-    aside.open {
-        transform: translateX(0);
-        z-index: 1000;
+    body {
+        grid-template: "sidebar document" 1fr / 140px 1fr;
     }
 }
 
