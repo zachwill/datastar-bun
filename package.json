@@ -6,10 +6,11 @@
   "main": "src/index.tsx",
   "module": "src/index.tsx",
   "scripts": {
-    "dev": "bun --hot src/server.ts",
-    "start": "NODE_ENV=production bun src/index.tsx"
+    "dev": "bun --hot src/server.tsx",
+    "start": "NODE_ENV=production bun src/server.tsx"
   },
   "dependencies": {
+    "html-entities": "^2.6.0",
     "react": "^19",
     "react-dom": "^19"
   },

@@ -109,3 +109,7 @@ bun --hot ./index.ts
 ```
 
 For more information, read the Bun API docs in `node_modules/bun-types/docs/**.md`.
+
+## IMPORTANT
+
+`bun dev` is already running in a terminal -- you don't need to execute that when writing code.

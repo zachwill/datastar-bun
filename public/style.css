@@ -1,0 +1,123 @@
+@import "pico.css";
+
+:root {
+    --pico-light-gray: #f0f0f0;
+}
+
+/* 1. Responsive grid */
+body {
+    display: grid;
+    height: 100dvh;
+    grid-template:
+        "sidebar document" 1fr / 260px 1fr;
+}
+
+#sidebar {
+    grid-area: sidebar;
+    background-color: var(--pico-light-gray);
+    height: 100dvh;
+    overflow-y: auto;
+    padding: var(--pico-spacing);
+
+    a:hover {
+        background-color: var(--pico-color);
+        color: #fff;
+        text-decoration: none;
+    }
+}
+
+main {
+    grid-area: document;
+    display: grid;
+    height: 100dvh;
+    overflow-y: auto;
+    padding: var(--pico-spacing);
+}
+
+
+@media (max-width: 980px) {
+    body {
+        grid-template:
+            "sidebar document" 1fr / 200px 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* On mobile, main becomes single column */
+    main {
+        grid-template: "content" 1fr / 1fr;
+    }
+
+    /* On mobile, asides become off-canvas panels */
+    aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 18rem;
+        padding: var(--pico-spacing);
+        background: var(--pico-surface, Canvas);
+        transition: transform .3s;
+        z-index: 900;
+        transform: translateX(-100%);
+    }
+
+    /* Datastar will add this class to show panels */
+    aside.open {
+        transform: translateX(0);
+        z-index: 1000;
+    }
+}
+
+/* 3. Scroll lock */
+.no-scroll {
+    overflow: hidden;
+}
+
+/* 4. Mobile header layout */
+.mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-block: var(--pico-spacing);
+}
+
+/* 5. Burger → X animation */
+.burger {
+    --size: 24px;
+    width: var(--size);
+    height: var(--size);
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+}
+
+.burger::before,
+.burger::after,
+.burger span {
+    content: '';
+    height: 2px;
+    background: currentColor;
+    transition: transform .25s, opacity .2s;
+}
+
+.burger span {
+    display: block;
+}
+
+.burger.open::before {
+    transform: translateY(10px) rotate(45deg);
+}
+
+.burger.open::after {
+    transform: translateY(-10px) rotate(-45deg);
+}
+
+.burger.open span {
+    opacity: 0;
+}

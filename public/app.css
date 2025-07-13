@@ -1,0 +1,136 @@
+/* ── 0. DESIGN TOKENS ─────────────────────────────── */
+body.app {
+    --hdr-h: 3.75rem;
+    --ftr-h: 3.125rem;
+    --nav-w: 12.5rem;
+    --asd-w: 12.5rem;
+    --pad: 1rem;
+    --dur: 200ms;
+    --ease: ease;
+
+    --border: hsl(0 0% 85%);
+    background: Canvas;
+    margin: 0;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Base state - all panels hidden */
+body.app {
+    --off-hdr: 0;
+    --off-ftr: 0;
+    --off-nav: 0;
+    --off-asd: 0;
+}
+
+/* Active states */
+body.app.header-open {
+    --off-hdr: var(--hdr-h);
+}
+
+body.app.footer-open {
+    --off-ftr: var(--ftr-h);
+}
+
+body.app.navbar-open {
+    --off-nav: var(--nav-w);
+}
+
+body.app.aside-open {
+    --off-asd: var(--asd-w);
+}
+
+/* ── 1. WRAPPER ────────────────────────────────────── */
+body.app {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── 2. HEADER & FOOTER ───────────────────────────── */
+body.app>header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: var(--off-hdr);
+    background: inherit;
+    transition: height var(--dur) var(--ease);
+}
+
+body.app>footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+    height: var(--off-ftr);
+    background: inherit;
+    transition: height var(--dur) var(--ease);
+}
+
+body.app>header[data-with-border] {
+    border-block-end: 1px solid var(--border);
+}
+
+body.app>footer[data-with-border] {
+    border-block-start: 1px solid var(--border);
+}
+
+/* ── 3. CONTENT WRAPPER ───────────────────────────── */
+body.app>.content-wrapper {
+    flex: 1;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ── 4. NAVBAR & ASIDE ────────────────────────────── */
+body.app nav {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--nav-w);
+    background: inherit;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(calc(-100% + var(--off-nav)));
+    transition: transform var(--dur) var(--ease);
+    z-index: 50;
+}
+
+body.app aside {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--asd-w);
+    background: inherit;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(calc(100% - var(--off-asd)));
+    transition: transform var(--dur) var(--ease);
+    z-index: 50;
+}
+
+body.app nav[data-with-border] {
+    border-inline-end: 1px solid var(--border);
+}
+
+body.app aside[data-with-border] {
+    border-inline-start: 1px solid var(--border);
+}
+
+/* ── 5. MAIN AREA ─────────────────────────────────── */
+body.app main {
+    flex: 1;
+    padding: var(--pad);
+    margin-left: var(--off-nav);
+    margin-right: var(--off-asd);
+    transition: margin var(--dur) var(--ease);
+    overflow: auto;
+}
+
+/* ── 6. GROW SECTIONS ─────────────────────────────── */
+body.app nav>section[data-grow],
+body.app aside>section[data-grow] {
+    flex: 1;
+}
