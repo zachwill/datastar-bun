@@ -5,12 +5,11 @@ export default () => {
         <meta charSet="UTF-8" />
         <title>Datastar AppShell</title>
         <link rel="stylesheet" href="/public/app.css" />
+
+        <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@main/bundles/datastar.js" />
       </head>
 
-      <body className="app" data-signals="{headerOpen: true, footerOpen: true, navbarOpen: true, asideOpen: true}"
-        data-class-header-open="$headerOpen" data-class-footer-open="$footerOpen" data-class-navbar-open="$navbarOpen"
-        data-class-aside-open="$asideOpen">
-
+      <body className="app" data-signals="{headerOpen: true, footerOpen: true, navbarOpen: true, asideOpen: true}">
         <header data-with-border>
           Header |
           <button data-on-click="$headerOpen = !$headerOpen">toggle</button>
