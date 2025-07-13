@@ -13,57 +13,59 @@ body.app {
     margin: 0;
     min-height: 100vh;
     position: relative;
-    overflow-x: hidden;
 }
 
-/* Base state - all panels hidden */
+/* Base state - all panels visible */
 body.app {
-    --off-hdr: 0;
-    --off-ftr: 0;
-    --off-nav: 0;
-    --off-asd: 0;
-}
-
-/* Active states */
-body.app.header-open {
     --off-hdr: var(--hdr-h);
-}
-
-body.app.footer-open {
     --off-ftr: var(--ftr-h);
-}
-
-body.app.navbar-open {
     --off-nav: var(--nav-w);
-}
-
-body.app.aside-open {
     --off-asd: var(--asd-w);
 }
 
-/* ── 1. WRAPPER ────────────────────────────────────── */
+/* Toggle states to hide panels */
+body.app.header-closed {
+    --off-hdr: 0;
+}
+
+body.app.footer-closed {
+    --off-ftr: 0;
+}
+
+body.app.navbar-closed {
+    --off-nav: 0;
+}
+
+body.app.aside-closed {
+    --off-asd: 0;
+}
+
+/* ── 1. GRID LAYOUT ───────────────────────────────── */
 body.app {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-areas:
+        "header header header"
+        "nav main aside"
+        "footer footer footer";
+    grid-template-rows: var(--off-hdr) 1fr var(--off-ftr);
+    grid-template-columns: var(--off-nav) 1fr var(--off-asd);
+    transition: grid-template-rows var(--dur) var(--ease),
+        grid-template-columns var(--dur) var(--ease);
 }
 
 /* ── 2. HEADER & FOOTER ───────────────────────────── */
 body.app>header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    height: var(--off-hdr);
+    grid-area: header;
     background: inherit;
-    transition: height var(--dur) var(--ease);
+    z-index: 100;
+    overflow: hidden;
 }
 
 body.app>footer {
-    position: sticky;
-    bottom: 0;
-    z-index: 100;
-    height: var(--off-ftr);
+    grid-area: footer;
     background: inherit;
-    transition: height var(--dur) var(--ease);
+    z-index: 100;
+    overflow: hidden;
 }
 
 body.app>header[data-with-border] {
@@ -74,40 +76,22 @@ body.app>footer[data-with-border] {
     border-block-start: 1px solid var(--border);
 }
 
-/* ── 3. CONTENT WRAPPER ───────────────────────────── */
-body.app>.content-wrapper {
-    flex: 1;
-    display: flex;
-    position: relative;
-    overflow: hidden;
-}
-
-/* ── 4. NAVBAR & ASIDE ────────────────────────────── */
+/* ── 3. NAVBAR & ASIDE ────────────────────────────── */
 body.app nav {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: var(--nav-w);
+    grid-area: nav;
     background: inherit;
     display: flex;
     flex-direction: column;
-    transform: translateX(calc(-100% + var(--off-nav)));
-    transition: transform var(--dur) var(--ease);
+    overflow: hidden;
     z-index: 50;
 }
 
 body.app aside {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: var(--asd-w);
+    grid-area: aside;
     background: inherit;
     display: flex;
     flex-direction: column;
-    transform: translateX(calc(100% - var(--off-asd)));
-    transition: transform var(--dur) var(--ease);
+    overflow: hidden;
     z-index: 50;
 }
 
@@ -119,17 +103,14 @@ body.app aside[data-with-border] {
     border-inline-start: 1px solid var(--border);
 }
 
-/* ── 5. MAIN AREA ─────────────────────────────────── */
+/* ── 4. MAIN AREA ─────────────────────────────────── */
 body.app main {
-    flex: 1;
+    grid-area: main;
     padding: var(--pad);
-    margin-left: var(--off-nav);
-    margin-right: var(--off-asd);
-    transition: margin var(--dur) var(--ease);
     overflow: auto;
 }
 
-/* ── 6. GROW SECTIONS ─────────────────────────────── */
+/* ── 5. GROW SECTIONS ─────────────────────────────── */
 body.app nav>section[data-grow],
 body.app aside>section[data-grow] {
     flex: 1;

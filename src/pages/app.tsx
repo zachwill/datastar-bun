@@ -16,26 +16,24 @@ export default () => {
           <button data-on-click="$headerOpen = !$headerOpen">toggle</button>
         </header>
 
-        <div className="content-wrapper">
-          <nav data-with-border>
-            <button data-on-click="$navbarOpen = !$navbarOpen">close nav</button>
-            <section>Menu A</section>
-            <section data-grow>Menu B (grows)</section>
-            <section>Menu C</section>
-          </nav>
+        <nav data-with-border>
+          <button data-on-click="$navbarOpen = !$navbarOpen">close nav</button>
+          <section>Menu A</section>
+          <section data-grow>Menu B (grows)</section>
+          <section>Menu C</section>
+        </nav>
 
-          <main>
-            <p>
-              <button data-on-click="$footerOpen = !$footerOpen">Toggle footer</button>
-            </p>
-            <p>(long, scrollable content ...)</p>
-          </main>
+        <main>
+          <p>
+            <button data-on-click="$footerOpen = !$footerOpen">Toggle footer</button>
+          </p>
+          <p>(long, scrollable content ...)</p>
+        </main>
 
-          <aside data-with-border>
-            <button data-on-click="$asideOpen = !$asideOpen">close aside</button>
-            Aside content
-          </aside>
-        </div>
+        <aside data-with-border>
+          <button data-on-click="$asideOpen = !$asideOpen">close aside</button>
+          Aside content
+        </aside>
 
         <footer data-with-border>
           Footer
