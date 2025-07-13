@@ -1,0 +1,6 @@
+[serve.static]
+env = "BUN_PUBLIC_*"
+
+[build]
+# Path mapping for @ alias
+resolve = { "@" = "src" }
