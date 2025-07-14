@@ -11,7 +11,7 @@ export default () => (
         <input type="range" min="0" max="99"
           {...{
             "data-bind-slider": "",
-            "data-on-load": "@get('/sse/slider')",
+            "data-on-interval__duration.1s.leading": "@get('/sse/slider')",
           }} />
         <output data-text={$`slider`}></output>
       </div>

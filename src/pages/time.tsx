@@ -8,7 +8,7 @@ export default () => (
     <h1>Time</h1>
     <p id="clock"
       {...{
-        "data-on-interval__duration.5s": "@get('/api/time')",
+        "data-on-interval__duration.1s.leading": "@get('/api/time')",
         "data-on-signal-patch": "el.textContent = patch.now"
       }}>
       {new Date().toISOString()}

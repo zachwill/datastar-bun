@@ -1,28 +1,26 @@
-import { sse, patch } from "../lib/sse";
-import type { Signals } from "../pages/chat";
-const p = patch<Signals>();
+import { sse } from "../lib/sse";
 
 export const routes = {
-  "/sse/chat": {
-    GET: () => {
-      let intervalId: NodeJS.Timeout;
+  "/sse/chat": async (req: Request) => {
+    const reader = await sse.readSignals(req);
 
-      return sse.stream(stream => {
-        let id = 0;
-        const send = (txt: string) => {
-          stream.patchElements(
-            `<li id="m${++id}">${txt}</li>`,
-            { selector: "#chat", mode: "append" },
-          );
-          stream.patchSignals(p({ lastMsg: txt }));
-        };
-        intervalId = setInterval(() => send("Ping " + new Date().toLocaleTimeString()), 3_000);
-      }, {
-        keepalive: true,
-        onAbort: () => {
-          if (intervalId) clearInterval(intervalId);
-        }
+    if (!reader.success) {
+      console.error(reader.error);
+      return new Response(`<p>Error reading signals</p>`, {
+        headers: {
+          "Content-Type": "text/html",
+        },
       });
-    },
-  },
+    }
+
+    return sse.stream(stream => {
+      // Send initial message immediately
+      const initialMessage = `Ping ${new Date().toLocaleTimeString()}`;
+      stream.patchElements(
+        `<li>${initialMessage}</li>`,
+        { selector: "#chat", mode: "append" },
+      );
+      stream.patchSignals(JSON.stringify({ lastMsg: initialMessage }));
+    });
+  }
 } as const;
