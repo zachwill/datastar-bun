@@ -15,7 +15,7 @@ export const routes = {
       });
     }
 
-    let value = reader.signals?.slider ?? 0;
+    let value = Number(reader.signals?.slider) || 0;
     return sse.stream(stream => {
       stream.patchSignals(JSON.stringify({
         slider: value = (value + 4) % 100,
