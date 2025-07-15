@@ -2,15 +2,11 @@ import { serve } from "bun";
 import { join, resolve, relative } from "path";
 import { existsSync } from "fs";
 
-import { html } from "./lib/html";
-import Shell from "./components/shell";
-
-import * as App from "./pages/app";
 import * as Chat from "./pages/chat";
-import * as Time from "./pages/time";
 import * as Clock from "./pages/clock";
-import * as Slider from "./pages/slider";
 import * as Counter from "./pages/counter";
+import * as Slider from "./pages/slider";
+import * as Time from "./pages/time";
 import * as Welcome from "./pages/welcome";
 
 serve({
@@ -18,12 +14,11 @@ serve({
     development: { hmr: true, console: true },
     routes: {
         ...Welcome.routes,
-        ...App.routes,
         ...Chat.routes,
-        ...Time.routes,
         ...Clock.routes,
-        ...Slider.routes,
         ...Counter.routes,
+        ...Slider.routes,
+        ...Time.routes,
         "/public/*": (req: Request) => {
             const url = new URL(req.url);
             const requestedPath = url.pathname.slice("/public/".length);
