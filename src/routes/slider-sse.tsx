@@ -1,5 +1,4 @@
 import { channel, patchSignals } from "../lib/sse";
-import type { Signals } from "../pages/slider";
 
 export const routes = {
   "/sse/slider": channel(async function* (req: Request, signals: Record<string, any>) {

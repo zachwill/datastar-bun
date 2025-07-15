@@ -6,7 +6,7 @@ const $ = Datastar<Signals>();
 export default () => (
   <>
     <h1>Slider</h1>
-    <div {...{ "data-signals": `{ slider: 0 }` }}>
+    <div {...$({ slider: 0 })}>
       <div className="grid">
         <input type="range" min="0" max="99"
           {...{

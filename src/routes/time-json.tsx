@@ -1,17 +1,7 @@
-import { tryReadSignals } from "../lib/sse";
+import { channel, patchSignals } from "../lib/sse";
 
 export const routes = {
-  "/api/time": async (req: Request) => {
-    const reader = await tryReadSignals(req);
-    if (!reader.success) {
-      console.error(reader.error);
-      return new Response(`<p>Error reading signals</p>`, {
-        headers: {
-          "Content-Type": "text/html",
-        },
-      });
-    }
-
-    return Response.json({ now: new Date().toISOString() });
-  },
+  "/api/time": channel(async function* (req: Request, signals: Record<string, any>) {
+    yield patchSignals({ now: new Date().toISOString() });
+  }),
 } as const;
