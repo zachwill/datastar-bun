@@ -1,5 +1,5 @@
 import { Datastar } from "../lib/expr";
-import { channel, patchSignals } from "../lib/sse";
+import { sse, patchSignals } from "../lib/sse";
 import { html } from '../lib/html';
 import Shell from "../components/shell";
 
@@ -22,7 +22,7 @@ export const routes = {
       </div>
     </Shell>
   ),
-  "/sse/slider": channel(async function* (req: Request, signals: Record<string, any>) {
+  "/sse/slider": sse(async function* (req: Request, signals: Record<string, any>) {
     const value = Number(signals.slider) || 0;
 
     yield patchSignals({

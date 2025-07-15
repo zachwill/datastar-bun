@@ -1,5 +1,5 @@
 import { Datastar } from "../lib/expr";
-import { channel, patchElements, patchSignals } from "../lib/sse";
+import { sse, patchElements, patchSignals } from "../lib/sse";
 import { html } from '../lib/html';
 import Shell from "../components/shell";
 
@@ -16,7 +16,7 @@ export const routes = {
       <p>Last: <strong data-text={$`lastMsg`}></strong></p>
     </Shell>
   ),
-  "/sse/chat": channel(async function* (req: Request, signals: Record<string, any>) {
+  "/sse/chat": sse(async function* (req: Request, signals: Record<string, any>) {
     const url = new URL(req.url);
     const initialMessage = `Ping ${new Date().toLocaleTimeString()}`;
 

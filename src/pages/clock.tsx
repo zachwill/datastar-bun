@@ -1,4 +1,4 @@
-import { channel, patchSignals } from "../lib/sse";
+import { sse, patchSignals } from "../lib/sse";
 import { html } from '../lib/html';
 import Shell from "../components/shell";
 
@@ -15,7 +15,7 @@ export const routes = {
       </h2>
     </Shell>
   ),
-  "/sse/clock": channel(async function* (req: Request, signals: Record<string, any>) {
+  "/sse/clock": sse(async function* (req: Request, signals: Record<string, any>) {
     yield patchSignals({ clock: new Date().toLocaleTimeString() });
   }),
 } as const;

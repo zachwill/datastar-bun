@@ -1,5 +1,5 @@
 import { Datastar } from "../lib/expr";
-import { channel, patchSignals } from "../lib/sse";
+import { sse, patchSignals } from "../lib/sse";
 import { html } from '../lib/html';
 import Shell from "../components/shell";
 
@@ -19,7 +19,7 @@ export const routes = {
       </p>
     </Shell>
   ),
-  "/api/time": channel(async function* (req: Request, signals: Record<string, any>) {
+  "/api/time": sse(async function* (req: Request, signals: Record<string, any>) {
     yield patchSignals({ now: new Date().toISOString() });
   }),
 } as const;
