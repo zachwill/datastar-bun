@@ -1,35 +1,65 @@
----
-description: Development guide for the Datastar + Bun examples project
-globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
-alwaysApply: false
----
 
-# Datastar + Bun Development Guide
+# Use Bun Instead of Node.js/npm/pnpm/vite
 
-This project demonstrates how to use Datastar with Bun for building reactive web applications.
+Default to using Bun instead of Node.js for all operations.
 
-## Project Setup
+## Commands
 
-Default to using Bun instead of Node.js for all operations:
+- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
+- Use `bun test` instead of `jest` or `vitest`
+- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
+- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
+- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
+- Bun automatically loads .env, so don't use dotenv
 
-- Use `bun run dev` to start the development server with hot reload
-- Use `bun run start` for production mode
-- Use `bun install` for dependencies
-- Use `bun test` for running tests
+## APIs
+
+- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
+- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
+- `Bun.redis` for Redis. Don't use `ioredis`.
+- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
+- `WebSocket` is built-in. Don't use `ws`.
+- Prefer `Bun.file()` over `node:fs`'s readFile/writeFile
+- Bun.$`ls` instead of execa
+
+## Testing
+
+Use `bun test` to run tests.
+
+```ts#index.test.ts
+import { test, expect } from "bun:test";
+
+test("hello world", () => {
+  expect(1).toBe(1);
+});
+```
 
 ## Server Architecture
 
-The server uses `Bun.serve()` with a routes object pattern:
+Use `Bun.serve()` with consolidated routing pattern:
 
-```ts
+```ts#server.ts
+import { serve } from "bun";
+import * as Welcome from "./pages/welcome";
+import * as Chat from "./pages/chat";
+
 serve({
     port: 5555,
     development: { hmr: true, console: true },
     routes: {
         ...Welcome.routes,
-        ...App.routes,
         ...Chat.routes,
-        // ... other route modules
+        "/public/*": (req: Request) => {
+            const url = new URL(req.url);
+            const requestedPath = url.pathname.slice("/public/".length);
+            
+            // Security check: prevent path traversal
+            if (requestedPath.includes("..")) {
+                return new Response("Forbidden", { status: 403 });
+            }
+            
+            return new Response(Bun.file(`public/${requestedPath}`));
+        }
     },
     fetch() { return new Response("Not found", { status: 404 }); },
 });
@@ -37,52 +67,89 @@ serve({
 
 ## Page Structure
 
-Each page follows this pattern:
+Each page exports routes object:
 
-```ts
+```ts#pages/example.tsx
 export const routes = {
-  "/path": () => html(
-    <Shell>
-      {/* Page content */}
-    </Shell>
-  ),
+    "/path": () => html(
+        <Shell>
+            {/* Page content */}
+        </Shell>
+    ),
+    "/path/api": () => sse(/* SSE response */),
 } as const;
 ```
 
-## Datastar Integration
+## Server-Sent Events (SSE)
 
-- Use `data-signals` attribute for reactive state
-- Use `data-text` for text binding
-- Use `data-on-click` and similar for event handling
-- Use Server-Sent Events for real-time updates
+Use the comprehensive SSE utilities in `src/lib/sse.ts`:
 
-## Key APIs Used
+```ts#example-sse.ts
+import { sse, patchElements, patchSignals, readSignals, executeScript } from "./lib/sse";
 
-- `Bun.serve()` for the web server with built-in routing
-- `Bun.file()` for serving static assets
-- Built-in WebSocket support for real-time features
-- React/JSX for server-side rendering
+// Real-time updates
+"/api/stream": () => sse(async function* () {
+    while (true) {
+        yield patchSignals({ time: new Date().toISOString() });
+        await Bun.sleep(1000);
+    }
+}),
 
-## File Organization
+// Process form data
+"/api/process": async (req: Request) => {
+    const signals = await readSignals(req);
+    return sse(patchSignals({ result: signals.value * 2 }));
+}
 
+// Execute JavaScript
+"/api/alert": () => sse(executeScript("alert('Hello!')"))
 ```
-src/
-├── server.ts          # Main server with consolidated routing
-├── components/        # Reusable UI components
-├── lib/              # Utilities (html, sse, expr)
-└── pages/            # Individual page examples
+
+## Frontend
+
+Use HTML with direct JSX imports. Don't use `vite`. HTML imports support React, CSS, Tailwind automatically.
+
+```html#index.html
+<html>
+  <body>
+    <h1>Hello, world!</h1>
+    <script type="module" src="./frontend.tsx"></script>
+  </body>
+</html>
 ```
 
-## Development Workflow
+With JSX components:
 
-1. Server runs with `bun --hot src/server.ts`
-2. Static assets served from `public/` directory
-3. All routing handled in single `server.ts` file
-4. Pages export route objects for clean organization
+```tsx#frontend.tsx
+import React from "react";
+import './index.css';
+import { createRoot } from "react-dom/client";
+
+const root = createRoot(document.body);
+
+export default function Frontend() {
+  return <h1>Hello, world!</h1>;
+}
+
+root.render(<Frontend />);
+```
+
+## Development
+
+- Run with `bun --hot ./src/server.ts`
+- Static assets from `public/` directory
+- Hot reload enabled automatically
+- All routing consolidated in single server file
 
 ## Important Notes
 
-- The dev server is already running - no need to start it manually
-- Static files are served via the `/public/*` route
+- `bun dev` is already running - don't execute it again
+- Use `Bun.file()` for static assets with security checks
+- All imports use ES modules syntax
+- SSE utilities handle all Datastar protocol requirements
+- Pages export route objects for clean organization
+
 - All imports use ES modules syntax
 - Hot reload is enabled for development
+- SSE utilities handle all Datastar protocol requirements automatically
+- Signal reading supports GET (query params), POST (JSON), and FormData formats
