@@ -37,6 +37,15 @@ export function isDatastarRequest(request: Request): boolean {
     return false;
 }
 
+/** Execute a script in the browser */
+export function executeScript(script: string, selector: string = "body") {
+    return patchElements(
+        `<script>${script}</script>`,
+        { selector, mode: "append" }
+    );
+}
+
+
 export type Mode =
     | "outer"
     | "inner"
