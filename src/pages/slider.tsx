@@ -1,5 +1,4 @@
-import { sse, patchSignals } from "../lib/sse";
-import { html } from '../lib/html';
+import { sse, patchSignals, html } from "../lib/sse";
 import Shell from "../components/shell";
 
 export type Signals = {

@@ -1,4 +1,4 @@
-import { html } from '../lib/html';
+import { html } from '../lib/sse';
 import Shell from "../components/shell";
 
 function LoremIpsum() {

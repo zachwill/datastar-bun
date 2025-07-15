@@ -1,8 +1,16 @@
 // SSE server utilities for Datastar
 import type { JSX } from "react";
+import { renderToStaticMarkup, renderToString } from "react-dom/server";
 
 const NEWLINE = "\n";
 const END = NEWLINE + NEWLINE;
+
+export function html(node: JSX.Element): Response {
+    return new Response(
+        renderToStaticMarkup(node),
+        { headers: { "content-type": "text/html; charset=utf-8" } },
+    );
+}
 
 function multiline(prefix: string, text: string) {
     return text
@@ -243,8 +251,4 @@ export function sse(
             Connection: "keep-alive",
         },
     });
-}
-
-declare global {
-    function renderToString(element: JSX.Element): string;
 }

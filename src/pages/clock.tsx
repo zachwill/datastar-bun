@@ -1,6 +1,12 @@
-import { sse, patchSignals } from "../lib/sse";
-import { html } from '../lib/html';
+import { html, sse, patchSignals } from "../lib/sse";
+import { Datastar } from "../lib/datastar";
 import Shell from "../components/shell";
+
+export type Signals = {
+  clock?: string;
+};
+
+const $ = Datastar<Signals>();
 
 export const routes = {
   "/clock": () => html(
@@ -8,14 +14,14 @@ export const routes = {
       <h1>Clock</h1>
       <h2 id="server-time"
         {...{
+          "data-text": $`$clock`,
           "data-on-interval__duration.1s.leading": "@get('/sse/clock')",
-          "data-on-signal-patch": "el.textContent = patch.clock"
         }}>
-        --:--:--
+        Loading...
       </h2>
-    </Shell>
+    </Shell >
   ),
-  "/sse/clock": sse(async function* (req: Request, signals: Record<string, any>) {
+  "/sse/clock": sse(async function* () {
     yield patchSignals({ clock: new Date().toLocaleTimeString() });
   }),
 } as const;

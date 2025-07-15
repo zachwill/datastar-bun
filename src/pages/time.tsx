@@ -1,10 +1,12 @@
-import { sse, patchSignals } from "../lib/sse";
-import { html } from '../lib/html';
+import { html, sse, patchSignals } from "../lib/sse";
+import { Datastar } from "../lib/datastar";
 import Shell from "../components/shell";
 
 export type Signals = {
-  now: string;
+  now?: string;
 };
+
+const $ = Datastar<Signals>();
 
 export const routes = {
   "/time": () => html(
@@ -12,8 +14,8 @@ export const routes = {
       <h1>Time</h1>
       <p id="clock"
         {...{
-          "data-signals": JSON.stringify({ now: new Date().toISOString() }),
-          "data-text": "$now",
+          ...$({ now: new Date().toISOString() }),
+          "data-text": $`$now`,
           "data-on-interval__duration.1s": "@get('/sse/time')",
         }}>
       </p>

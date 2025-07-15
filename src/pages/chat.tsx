@@ -1,11 +1,13 @@
-import { sse, patchElements, patchSignals } from "../lib/sse";
-import { html } from '../lib/html';
+import { html, sse, patchElements, patchSignals } from "../lib/sse";
+import { Datastar } from "../lib/datastar";
 import Shell from "../components/shell";
 
 export type Signals = {
-  lastMsg: string;
-  fromURL: string;
+  lastMsg?: string;
+  fromURL?: string;
 };
+
+const $ = Datastar<Signals>();
 
 export const routes = {
   "/chat": () => html(
@@ -14,7 +16,7 @@ export const routes = {
       <ul id="chat" {...{
         "data-on-interval__duration.1s.leading": "@get('/sse/chat')",
       }}></ul>
-      <p>Last: <strong {...{ "data-text": "$lastMsg" }}></strong></p>
+      <p>Last: <strong {...{ "data-text": $`$lastMsg` }}></strong></p>
     </Shell>
   ),
 
