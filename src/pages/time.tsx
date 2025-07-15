@@ -13,10 +13,9 @@ export const routes = {
       <p id="clock"
         {...{
           "data-signals": JSON.stringify({ now: new Date().toISOString() }),
+          "data-text": "$now",
           "data-on-interval__duration.1s": "@get('/sse/time')",
-          "data-on-signal-patch": "el.textContent = patch.now"
         }}>
-        {new Date().toISOString()}
       </p>
     </Shell>
   ),
