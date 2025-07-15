@@ -1,8 +1,8 @@
-import { sse } from "@/lib/sse";
+import { tryReadSignals } from "../lib/sse";
 
 export const routes = {
   "/api/time": async (req: Request) => {
-    const reader = await sse.readSignals(req);
+    const reader = await tryReadSignals(req);
     if (!reader.success) {
       console.error(reader.error);
       return new Response(`<p>Error reading signals</p>`, {

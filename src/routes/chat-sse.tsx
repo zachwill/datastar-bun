@@ -1,26 +1,16 @@
-import { sse } from "../lib/sse";
+import { channel, patchElements, patchSignals } from "../lib/sse";
 
 export const routes = {
-  "/sse/chat": async (req: Request) => {
-    const reader = await sse.readSignals(req);
+  "/sse/chat": channel(async function* (req: Request, signals: Record<string, any>) {
+    const url = new URL(req.url);
+    console.log(url);
+    const initialMessage = `Ping ${new Date().toLocaleTimeString()}`;
 
-    if (!reader.success) {
-      console.error(reader.error);
-      return new Response(`<p>Error reading signals</p>`, {
-        headers: {
-          "Content-Type": "text/html",
-        },
-      });
-    }
+    yield patchElements(
+      `<li>${initialMessage}</li>`,
+      { selector: "#chat", mode: "append" }
+    );
 
-    return sse.stream(stream => {
-      // Send initial message immediately
-      const initialMessage = `Ping ${new Date().toLocaleTimeString()}`;
-      stream.patchElements(
-        `<li>${initialMessage}</li>`,
-        { selector: "#chat", mode: "append" },
-      );
-      stream.patchSignals(JSON.stringify({ lastMsg: initialMessage }));
-    });
-  }
+    yield patchSignals({ lastMsg: initialMessage });
+  })
 } as const;
