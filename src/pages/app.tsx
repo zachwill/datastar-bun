@@ -1,5 +1,7 @@
-export default () => {
-  return (
+import { html } from '../lib/html';
+
+export const routes = {
+  "/app": () => html(
     <html lang="en">
       <head>
         <meta charSet="UTF-8" />
@@ -40,5 +42,5 @@ export default () => {
       </body>
 
     </html>
-  );
-}
+  ),
+} as const;

@@ -1,13 +1,14 @@
 {
-  "name": "bun-react-template",
+  "name": "datastar-bun-examples",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "src/index.tsx",
-  "module": "src/index.tsx",
+  "description": "Simple examples of how to use Datastar with Bun",
+  "main": "src/server.ts",
+  "module": "src/server.ts",
   "scripts": {
-    "dev": "bun --hot src/server.tsx",
-    "start": "NODE_ENV=production bun src/server.tsx"
+    "dev": "bun --hot src/server.ts",
+    "start": "NODE_ENV=production bun src/server.ts"
   },
   "dependencies": {
     "html-entities": "^2.6.0",

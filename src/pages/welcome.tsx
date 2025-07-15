@@ -1,3 +1,6 @@
+import { html } from '../lib/html';
+import Shell from "../components/shell";
+
 function LoremIpsum() {
   return (
     <>
@@ -21,17 +24,19 @@ function LoremIpsum() {
   );
 }
 
-export default () => (
-  <>
-    <hgroup>
-      <h1>Datastar + Bun</h1>
-      <p>Simple examples of how to use Datastar with Bun</p>
-    </hgroup>
-    <hr />
-    <LoremIpsum />
-    <LoremIpsum />
-    <LoremIpsum />
-    <LoremIpsum />
-    <LoremIpsum />
-  </>
-);
+export const routes = {
+  "/": () => html(
+    <Shell>
+      <hgroup>
+        <h1>Datastar + Bun</h1>
+        <p>Simple examples of how to use Datastar with Bun</p>
+      </hgroup>
+      <hr />
+      <LoremIpsum />
+      <LoremIpsum />
+      <LoremIpsum />
+      <LoremIpsum />
+      <LoremIpsum />
+    </Shell>
+  ),
+} as const;
