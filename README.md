@@ -107,13 +107,13 @@ serve({
 export const routes = {
     "/counter": () => html(
         <div data-signals='{"count": 0}'>
-            <p data-text="count"></p>
+            <p data-text="$count"></p>
             <button data-on-click="post('/counter/increment')">+</button>
             <button data-on-click="post('/counter/decrement')">-</button>
         </div>
     ),
-    "/counter/increment": () => sse(patchSignals({ count: "count + 1" })),
-    "/counter/decrement": () => sse(patchSignals({ count: "count - 1" })),
+    "/counter/increment": () => sse(patchSignals({ count: "$count + 1" })),
+    "/counter/decrement": () => sse(patchSignals({ count: "$count - 1" })),
 };
 ```
 
