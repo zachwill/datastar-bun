@@ -1,4 +1,3 @@
-
 # Use Bun Instead of Node.js/npm/pnpm/vite
 
 Default to using Bun instead of Node.js for all operations.
@@ -81,7 +80,7 @@ export const routes = {
 
 ## Server-Sent Events (SSE)
 
-The SSE utilities in `src/lib/sse.ts` handle all the Datastar protocol stuff:
+The SSE utilities in `src/lib/sse.ts` handle all Datastar protocol functionality:
 
 ```ts#example-sse.ts
 import { sse, interval, patchElements, patchSignals, readSignals } from "./lib/sse";
@@ -145,14 +144,14 @@ root.render(<Frontend />);
 
 ## Development
 
-- Run with `bun --hot ./src/server.ts`
+- Run with `bun dev`
 - Static assets from `public/` directory
 - Hot reload enabled automatically
 - All routing consolidated in single server file
 
 ## Important Notes
 
-- `bun dev` is already running - don't execute it again
+- `bun dev` is likely already running - don't execute it again
 - Use `Bun.file()` for static assets with security checks
 - All imports use ES modules syntax
 - SSE utilities handle all Datastar protocol requirements

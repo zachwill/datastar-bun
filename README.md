@@ -1,10 +1,46 @@
 # Datastar + Bun Examples
 
-Some examples of using [Datastar](https://github.com/starfederation/datastar) with [Bun](https://bun.sh/) for real-time web apps with server-sent events.
+Examples of using [Datastar](https://github.com/starfederation/datastar) with [Bun](https://bun.sh/) for real-time server-sent events.
 
-## What is Datastar?
+### Simple case
 
-Datastar lets you build reactive web apps using HTML attributes and server-side rendering. Real-time updates happen via Server-Sent Events, so no client-side JavaScript framework needed.
+```typescript
+"/sse/time": sse(async function* () {
+    yield patchElements(<div>{new Date().toISOString()}</div>);
+})
+```
+
+### With polling:
+
+```typescript
+"/sse/chat": sse(async function* () {
+    for await (const _ of interval(1000)) {
+        const msg = `Ping ${new Date().toLocaleTimeString()}`;
+        yield patchElements(<li>{msg}</li>, { selector: "#chat", mode: "append" });
+        yield patchSignals({ lastMsg: msg });
+    }
+})
+```
+
+### With request/signals:
+
+```typescript
+"/sse/updates": sse(async function* (req, signals) {
+    // Initial state
+    yield patchSignals({ loading: true });
+    
+    // Check for updates every 2 seconds
+    for await (const _ of interval(2000)) {
+        const updates = await checkForUpdates(signals.lastId);
+        if (updates.length > 0) {
+            for (const update of updates) {
+                yield patchElements(<li>{update.text}</li>, { selector: "#updates", mode: "append" });
+            }
+            yield patchSignals({ lastId: updates.at(-1).id, loading: false });
+        }
+    }
+})
+```
 
 ## Getting Started
 
@@ -27,7 +63,7 @@ Server runs on `http://localhost:5555`
 - **Slider** (`/slider`) - Interactive slider
 - **Time** (`/time`) - Time display with different formats
 
-## Project Structure
+### Project Structure
 
 ```
 src/
@@ -48,9 +84,9 @@ src/
 
 ## Key Features
 
-### Server-Side Intervals (No Client Polling!)
+### Server-Side Intervals
 
-The `interval()` function handles timing on the server, eliminating client-side polling:
+The `interval()` function handles timing on the server:
 
 ```ts
 "/sse/clock": sse(async function* (req: Request, signals: Signals) {
@@ -63,7 +99,7 @@ The `interval()` function handles timing on the server, eliminating client-side 
 
 ### SSE Utilities
 
-The `src/lib/sse.ts` module has everything you need:
+The `src/lib/sse.ts` module has everything:
 
 - **`interval(ms)`** - Server-side timing
 - **`patchElements(html, {selector, mode})`** - Update DOM elements
@@ -137,7 +173,7 @@ export const routes = {
 };
 ```
 
-### Real-time Chat
+### Chat
 
 ```tsx
 export const routes = {
@@ -152,16 +188,3 @@ export const routes = {
     }),
 };
 ```
-
-## Development
-
-- Hot reload with `bun --hot src/server.ts`
-- Static assets from `public/` directory
-- All routing consolidated in `src/server.ts`
-- Pages export route objects
-
-## Learn More
-
-- [Datastar Documentation](https://github.com/starfederation/datastar)
-- [Bun Documentation](https://bun.sh/docs)
-- [Server-Sent Events Guide](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)
