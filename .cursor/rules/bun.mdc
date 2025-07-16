@@ -1,1 +1,198 @@
-../../CLAUDE.md
+---
+description: Bun usage - runtime, APIs, and tooling preferences
+globs: **/*
+alwaysApply: true
+---
+
+# Use Bun Instead of Node.js/npm/pnpm/vite
+
+Default to using Bun instead of Node.js for all operations.
+
+## Commands
+
+- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
+- Use `bun test` instead of `jest` or `vitest`
+- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
+- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
+- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
+- Bun automatically loads .env, so don't use dotenv
+
+## APIs
+
+- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
+- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
+- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
+- `WebSocket` is built-in. Don't use `ws`.
+- Prefer `Bun.file()` over `node:fs`'s readFile/writeFile
+- `Bun.$` for shell commands instead of `execa`
+
+## Testing
+
+Use `bun test` to run tests.
+
+```ts
+import { test, expect } from "bun:test";
+
+test("hello world", () => {
+  expect(1).toBe(1);
+});
+```
+
+## Server Architecture
+
+Use `Bun.serve()` with consolidated routing pattern:
+
+```ts
+import { serve } from "bun";
+import * as Welcome from "./pages/welcome";
+import * as Chat from "./pages/chat";
+
+serve({
+    port: 5555,
+    development: { hmr: true, console: true },
+    routes: {
+        ...Welcome.routes,
+        ...Chat.routes,
+        "/public/*": (req: Request) => {
+            const url = new URL(req.url);
+            const requestedPath = url.pathname.slice("/public/".length);
+            
+            // Security check: prevent path traversal
+            if (requestedPath.includes("..")) {
+                return new Response("Forbidden", { status: 403 });
+            }
+            
+            return new Response(Bun.file(`public/${requestedPath}`));
+        }
+    },
+    fetch() { return new Response("Not found", { status: 404 }); },
+});
+```
+
+## File Operations
+
+Prefer Bun's native file operations:
+
+```ts
+// Reading files
+const file = Bun.file("path/to/file.txt");
+const text = await file.text();
+const json = await file.json();
+const arrayBuffer = await file.arrayBuffer();
+
+// Writing files
+await Bun.write("output.txt", "Hello World");
+await Bun.write("data.json", { key: "value" });
+```
+
+## Environment Variables
+
+Bun automatically loads `.env` files:
+
+```ts
+// No need for dotenv
+const dbUrl = process.env.DATABASE_URL;
+```
+
+## Shell Commands
+
+Use `Bun.$` for shell commands:
+
+```ts
+import { $ } from "bun";
+
+// Run shell commands
+const result = await $`ls -la`;
+console.log(result.stdout);
+
+// With error handling
+try {
+    await $`git status`;
+} catch (error) {
+    console.error(error.stderr);
+}
+```
+
+## HTTP Requests
+
+Use `fetch` (built-in) or Bun's utilities:
+
+```ts
+// Standard fetch
+const response = await fetch("https://api.example.com/data");
+const data = await response.json();
+
+// For file uploads
+const formData = new FormData();
+formData.append("file", Bun.file("./document.pdf"));
+await fetch("/upload", { method: "POST", body: formData });
+```
+
+## Database Integration
+
+### SQLite with bun:sqlite
+
+```ts
+import { Database } from "bun:sqlite";
+
+const db = new Database("mydb.sqlite");
+const query = db.query("SELECT * FROM users WHERE id = ?");
+const user = query.get(1);
+```
+
+### PostgreSQL with Bun.sql
+
+```ts
+import { sql } from "bun";
+
+const result = await sql`SELECT * FROM users WHERE id = ${userId}`;
+```
+
+## WebSocket Support
+
+Built-in WebSocket support in `Bun.serve()`:
+
+```ts
+serve({
+    port: 3000,
+    websocket: {
+        message(ws, message) {
+            ws.send(`Echo: ${message}`);
+        },
+        open(ws) {
+            console.log("WebSocket opened");
+        },
+        close(ws) {
+            console.log("WebSocket closed");
+        },
+    },
+    fetch(req, server) {
+        const success = server.upgrade(req);
+        if (success) return undefined;
+        return new Response("Upgrade failed", { status: 500 });
+    },
+});
+```
+
+## Development Notes
+
+- **Hot Module Reloading (HMR)** is built-in with `development: { hmr: true }`
+- **TypeScript support** is native - no configuration needed
+- **Fast startup** - Bun starts much faster than Node.js
+- **Memory efficient** - Lower memory usage than Node.js
+- **Bundle size** - Smaller bundles with built-in bundler
+
+## Performance Optimizations
+
+- Use `Bun.file()` for static assets - it's optimized for serving files
+- Enable HMR in development for faster iteration
+- Use `Bun.serve()` routing instead of middleware chains
+- Leverage built-in WebSocket support for real-time features
+
+## Important Notes
+
+- `bun dev` is likely already running - don't execute it again unless explicitly needed
+- Use `Bun.file()` for static assets with proper security checks
+- All imports use ES modules syntax
+- Built-in TypeScript support means no compilation step needed
+- Use native Bun APIs over Node.js equivalents when available

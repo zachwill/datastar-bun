@@ -1,166 +1,137 @@
----
-description: Bun usage
-globs: **/*
-alwaysApply: true
----
+# Datastar + Bun Project Overview
 
-# Use Bun Instead of Node.js/npm/pnpm/vite
+This is a **Datastar** + **Bun** project that demonstrates real-time web applications using Server-Sent Events (SSE) and reactive data binding.
 
-Default to using Bun instead of Node.js for all operations.
+## Project Purpose
 
-## Commands
+This project showcases how to build reactive, real-time web applications using:
+- **Datastar** - A frontend framework for reactive data binding and real-time updates
+- **Bun** - A fast JavaScript runtime and bundler
+- **Server-Sent Events (SSE)** - For real-time server-to-client communication
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Bun automatically loads .env, so don't use dotenv
+## Architecture Overview
 
-## APIs
+### Core Components
 
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file()` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa
+1. **Server** (`src/server.ts`) - Main Bun server with consolidated routing
+2. **Pages** (`src/pages/`) - Individual example pages, each exports routes
+3. **Components** (`src/components/`) - Reusable React components
+4. **Libraries** (`src/lib/`) - Core utilities for SSE and Datastar integration
 
-## Testing
+### Key Architecture Patterns
 
-Use `bun test` to run tests.
+- **Consolidated Routing** - All routes are imported and merged in `server.ts`
+- **Page-based Organization** - Each page exports a `routes` object
+- **SSE-first Real-time** - Server-driven updates via Server-Sent Events
+- **Reactive Data Binding** - Datastar handles client-side reactivity
 
-```ts#index.test.ts
-import { test, expect } from "bun:test";
+## Project Structure
 
-test("hello world", () => {
-  expect(1).toBe(1);
-});
+```
+src/
+├── server.ts          # Main server with Bun.serve() and consolidated routes
+├── components/        # Reusable React components
+│   └── shell.tsx     # App shell with navigation
+├── lib/              # Core utilities
+│   ├── datastar.ts   # Datastar expression helpers
+│   └── sse.ts        # Server-Sent Events utilities
+└── pages/            # Individual examples
+    ├── chat.tsx      # Real-time chat
+    ├── clock.tsx     # Live clock
+    ├── counter.tsx   # Interactive counter
+    ├── slider.tsx    # Range slider
+    ├── time.tsx      # Time formatting
+    └── welcome.tsx   # Welcome page
 ```
 
-## Server Architecture
+## Key Libraries and Utilities
 
-Use `Bun.serve()` with consolidated routing pattern:
+### SSE Utilities (`src/lib/sse.ts`)
 
-```ts#server.ts
-import { serve } from "bun";
-import * as Welcome from "./pages/welcome";
-import * as Chat from "./pages/chat";
+This is the core of the real-time functionality:
 
-serve({
-    port: 5555,
-    development: { hmr: true, console: true },
-    routes: {
-        ...Welcome.routes,
-        ...Chat.routes,
-        "/public/*": (req: Request) => {
-            const url = new URL(req.url);
-            const requestedPath = url.pathname.slice("/public/".length);
-            
-            // Security check: prevent path traversal
-            if (requestedPath.includes("..")) {
-                return new Response("Forbidden", { status: 403 });
-            }
-            
-            return new Response(Bun.file(`public/${requestedPath}`));
-        }
-    },
-    fetch() { return new Response("Not found", { status: 404 }); },
-});
-```
+- **`sse(async function* (req, signals) { ... })`** - Creates SSE streams
+- **`interval(ms)`** - Server-side timing (eliminates client polling)
+- **`patchElements(html, {selector, mode})`** - Updates DOM elements
+- **`patchSignals(signals)`** - Updates reactive state
+- **`readSignals(req)`** - Reads signals from requests (GET/POST/FormData)
 
-## Page Structure
+### Datastar Integration (`src/lib/datastar.ts`)
 
-Each page exports routes object:
+Helper functions for Datastar's reactive expressions and data binding.
 
-```ts#pages/example.tsx
+## Example Pages
+
+Each example demonstrates different Datastar + SSE patterns:
+
+- **Welcome** (`/`) - Homepage with navigation
+- **Counter** (`/counter`) - Simple reactive counter
+- **Chat** (`/chat`) - Real-time chat with SSE updates
+- **Clock** (`/clock`) - Live updating clock
+- **Slider** (`/slider`) - Interactive range slider
+- **Time** (`/time`) - Time display with formatting
+
+## Common Patterns
+
+### Page Structure
+
+Each page exports a `routes` object:
+
+```tsx
 export const routes = {
-    "/path": () => html(
-        <Shell>
-            {/* Page content */}
-        </Shell>
-    ),
-    "/path/api": () => sse(/* SSE response */),
+    "/page": () => html(<Shell>/* content */</Shell>),
+    "/sse/page": sse(async function* (req, signals) {
+        // SSE logic
+    }),
 } as const;
 ```
 
-## Server-Sent Events (SSE)
+### Real-time Updates
 
-The SSE utilities in `src/lib/sse.ts` handle all Datastar protocol functionality:
+Server-driven updates using SSE:
 
-```ts#example-sse.ts
-import { sse, interval, patchElements, patchSignals, readSignals } from "./lib/sse";
-
-// Real-time updates with server-side intervals (no client polling!)
-"/api/clock": sse(async function* (req: Request, signals: Signals) {
+```tsx
+"/sse/clock": sse(async function* (req: Request, signals: Signals) {
     yield patchSignals({ time: new Date().toISOString() });
     for await (const _ of interval(1000)) {
         yield patchSignals({ time: new Date().toISOString() });
     }
 }),
-
-// Process form data
-"/api/process": sse(async function* (req: Request, signals: Signals) {
-    const result = signals.value * 2;
-    yield patchSignals({ result });
-}),
-
-// Execute JavaScript on the client
-"/api/alert": sse(async function* () {
-    yield executeScript("alert('Hello!')");
-})
 ```
 
-## Key SSE Functions
+### Client-side Reactivity
 
-- **`interval(ms)`** - Server-side timing, eliminates client polling
-- **`patchElements(html, {selector, mode})`** - Update DOM elements
-- **`patchSignals(signals)`** - Update reactive state
-- **`readSignals(req)`** - Get signals from request (GET/POST/FormData)
-- **`sse(async function* (req, signals) { ... })`** - Create SSE streams
+Using Datastar attributes for reactive behavior:
 
-## Frontend
-
-Use HTML with direct JSX imports. Don't use `vite`. HTML imports support React, CSS, Tailwind automatically.
-
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
+```tsx
+<div {...$({ counter: 0 })}>
+    <button {...{ "data-on-click": $`$counter -= 1` }}>-</button>
+    <h2 {...{ "data-text": $`$counter` }} />
+    <button {...{ "data-on-click": $`$counter += 1` }}>+</button>
+</div>
 ```
 
-With JSX components:
+## Development Workflow
 
-```tsx#frontend.tsx
-import React from "react";
-import './index.css';
-import { createRoot } from "react-dom/client";
+- **Server**: Runs on port 5555 with hot reload
+- **Static Assets**: Served from `public/` directory
+- **Routing**: Consolidated in `server.ts` with page-based organization
+- **Real-time**: Server-side intervals preferred over client polling
 
-const root = createRoot(document.body);
+## Key Concepts for AI Assistants
 
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
-```
-
-## Development
-
-- Run with `bun dev`
-- Static assets from `public/` directory
-- Hot reload enabled automatically
-- All routing consolidated in single server file
+1. **Server-side Timing** - Use `interval()` on the server rather than client-side polling
+2. **Reactive State** - Datastar handles client-side reactivity via `data-*` attributes
+3. **SSE Streams** - Use generator functions for real-time updates
+4. **Consolidated Routing** - All page routes are imported and merged in `server.ts`
+5. **Page Organization** - Each page is self-contained with its own routes
+6. **Security** - Path traversal protection for static assets
 
 ## Important Notes
 
-- `bun dev` is likely already running - don't execute it again
-- Use `Bun.file()` for static assets with security checks
-- All imports use ES modules syntax
+- This project uses Bun as the runtime (not Node.js)
 - SSE utilities handle all Datastar protocol requirements
+- Server-side intervals are preferred over client-side polling
+- All routing is consolidated in a single server file
 - Pages export route objects for clean organization
-- Use `data-on-load="@get('/sse/endpoint')"` instead of client-side intervals
-- Server-side `interval()` is way better than client polling
+- Static assets are served with security checks
