@@ -144,7 +144,7 @@ serve({
 
 ```tsx
 export const routes = {
-    "/counter": () => html(
+    "/counter": html(
         <div {...$({ counter: 0 })}>
             <button {...{ "data-on-click": $`$counter -= 1` }}>-</button>
             <h2 {...{ "data-text": $`$counter` }} />
@@ -158,7 +158,7 @@ export const routes = {
 
 ```tsx
 export const routes = {
-    "/clock": () => html(
+    "/clock": html(
         <Shell>
             <h2 {...{
                 "data-text": $`$clock`,
@@ -179,7 +179,7 @@ export const routes = {
 
 ```tsx
 export const routes = {
-    "/chat": () => html(/* chat interface */),
+    "/chat": html(/* chat interface */),
     "/sse/chat": sse(async function* (req: Request, signals: Signals) {
         yield patchElements(<li>Chat starting...</li>, { selector: "#chat", mode: "prepend" });
         for await (const _ of interval(1000)) {
