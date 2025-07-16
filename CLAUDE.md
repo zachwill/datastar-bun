@@ -1,3 +1,9 @@
+---
+description: Bun usage
+globs: **/*
+alwaysApply: true
+---
+
 # Use Bun Instead of Node.js/npm/pnpm/vite
 
 Default to using Bun instead of Node.js for all operations.

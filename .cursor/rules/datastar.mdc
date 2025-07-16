@@ -1,0 +1,515 @@
+---
+description: This guide provides a comprehensive foundation for building reactive, real-time applications with Datastar and Bun.
+globs: **/*.tsx, **/*.ts
+alwaysApply: false
+---
+
+# Datastar + Bun: Development Guide
+
+This guide explains how to use Datastar with Server-Sent Events (SSE) in TypeScript and TSX files, leveraging Bun's performance and modern JavaScript features.
+
+## Core Concepts
+
+### What is Datastar?
+
+Datastar is a hypermedia framework that enables reactive, server-driven applications. It provides:
+- **Reactive Data Binding** - `data-signals` for state management
+- **Event Handling** - `data-*` attributes for interactions
+- **Real-time Updates** - Server-Sent Events for live data
+- **DOM Manipulation** - Server-driven element updates
+
+### Basic Structure
+
+Every Datastar page follows this pattern:
+
+```tsx
+import { html, sse, interval, patchSignals, patchElements } from "../lib/sse";
+import { Datastar } from "../lib/datastar";
+import Shell from "../components/shell";
+
+export type Signals = {
+  // Define your reactive state type
+  counter?: number;
+  message?: string;
+};
+
+const $ = Datastar<Signals>();
+
+export const routes = {
+  "/page": html(
+    <Shell>
+      {/* Your reactive JSX */}
+    </Shell>
+  ),
+  "/sse/endpoint": sse(async function* (req: Request, signals: Signals) {
+    // Your SSE logic
+  }),
+} as const;
+```
+
+## Type-Safe Datastar Factory
+
+### Creating the Factory
+
+The `Datastar<T>()` factory provides type-safe signal management:
+
+```ts
+// lib/datastar.ts
+export function Datastar<T>() {
+    type ValidPaths = DotPaths<T>;
+
+    function handler(input: T): { "data-signals": string };
+    function handler<S extends string>(template: ValidateExpr<S, ValidPaths>): S;
+    function handler(strings: TemplateStringsArray, ...values: any[]): string;
+    
+    // Implementation handles both signal objects and template strings
+}
+```
+
+### Usage Patterns
+
+**Signal Initialization:**
+```tsx
+const $ = Datastar<{ counter: number }>();
+
+// Initialize signals
+<div {...$({ counter: 0 })}>
+  {/* content */}
+</div>
+```
+
+**Template String Expressions:**
+```tsx
+// Type-safe expressions
+<h2 {...{ "data-text": $`$counter` }} />
+<button {...{ "data-on-click": $`$counter += 1` }}>+</button>
+```
+
+**Supported Operators:**
+- Arithmetic: `$counter += 1`, `$counter -= 1`
+- Comparison: `$counter > 0`, `$counter === 10`
+- Logical: `$loading && $counter > 0`
+
+## SSE Utilities
+
+### Core Functions
+
+**`patchSignals(signals, options?)`**
+Updates reactive state on the client:
+
+```ts
+yield patchSignals({ counter: 42, message: "Updated!" });
+yield patchSignals({ loading: false }, { onlyIfMissing: true });
+```
+
+**`patchElements(html, options?)`**
+Updates DOM elements:
+
+```ts
+// Replace content
+yield patchElements(<div>New content</div>, { 
+  selector: "#target", 
+  mode: "inner" 
+});
+
+// Append to list
+yield patchElements("<li>New item</li>", { 
+  selector: "#list", 
+  mode: "append" 
+});
+```
+
+**Modes:**
+- `"outer"` - Replace entire element (default)
+- `"inner"` - Replace content only
+- `"append"` - Add to end
+- `"prepend"` - Add to beginning
+- `"before"` - Insert before element
+- `"after"` - Insert after element
+- `"remove"` - Remove element
+
+**`interval(ms, options?)`**
+Server-side timing for real-time updates:
+
+```ts
+// Update every second
+for await (const _ of interval(1000)) {
+  yield patchSignals({ time: new Date().toISOString() });
+}
+
+// With abort signal
+const controller = new AbortController();
+for await (const _ of interval(1000, { signal: controller.signal })) {
+  // Your logic
+}
+```
+
+### SSE Stream Creation
+
+**Simple Streams:**
+```ts
+"/sse/simple": sse(async function* () {
+  yield patchSignals({ message: "Hello!" });
+})
+```
+
+**Request-Aware Streams:**
+```ts
+"/sse/interactive": sse(async function* (req: Request, signals: Signals) {
+  // Access request data and current signals
+  const userId = signals.userId || "anonymous";
+  
+  for await (const _ of interval(2000)) {
+    yield patchSignals({ 
+      timestamp: Date.now(),
+      user: userId 
+    });
+  }
+})
+```
+
+### Reading Signals
+
+**From Requests:**
+```ts
+// Automatic in SSE handlers
+"/sse/endpoint": sse(async function* (req: Request, signals: Signals) {
+  // signals contains current client state
+})
+
+// Manual reading
+const signals = await readSignals(request);
+const safeSignals = await readSignalsWithDefaults(request, { count: 0 });
+```
+
+**Signal Sources:**
+- GET: Query parameter `?datastar={"key":"value"}`
+- POST: JSON body or form data with `datastar` field
+- Headers: Various Datastar-specific headers
+
+## Common Patterns
+
+### 1. Simple State Management
+
+```tsx
+// Counter example
+export type Signals = { counter?: number };
+const $ = Datastar<Signals>();
+
+<div {...$({ counter: 0 })}>
+  <button {...{ "data-on-click": $`$counter -= 1` }}>-</button>
+  <span {...{ "data-text": $`$counter` }} />
+  <button {...{ "data-on-click": $`$counter += 1` }}>+</button>
+</div>
+```
+
+### 2. Real-Time Data Streams
+
+```tsx
+// Live clock
+export const routes = {
+  "/clock": html(
+    <h2 {...{
+      "data-text": $`$time`,
+      "data-on-load": "@get('/sse/clock')",
+    }}>Loading...</h2>
+  ),
+  
+  "/sse/clock": sse(async function* () {
+    yield patchSignals({ time: new Date().toLocaleTimeString() });
+    for await (const _ of interval(1000)) {
+      yield patchSignals({ time: new Date().toLocaleTimeString() });
+    }
+  }),
+};
+```
+
+### 3. Interactive Forms with Validation
+
+```tsx
+export type Signals = {
+  email?: string;
+  valid?: boolean;
+  message?: string;
+};
+
+<form {...$({ email: "", valid: false })}>
+  <input {...{
+    "data-bind-email": "",
+    "data-on-input": "@post('/validate')",
+    type: "email"
+  }} />
+  <div {...{
+    "data-text": $`$message`,
+    "data-show": $`!$valid`
+  }} />
+  <button {...{
+    "data-disabled": $`!$valid`,
+    "data-on-click": "@post('/submit')"
+  }}>Submit</button>
+</form>
+```
+
+### 4. Real-Time Lists
+
+```tsx
+// Chat messages
+export const routes = {
+  "/chat": html(
+    <div>
+      <ul id="messages" {...{ "data-on-load": "@get('/sse/chat')" }} />
+      <p>Last: <strong {...{ "data-text": $`$lastMsg` }} /></p>
+    </div>
+  ),
+  
+  "/sse/chat": sse(async function* (req, signals) {
+    yield patchElements(
+      <li>Chat started</li>, 
+      { selector: "#messages", mode: "prepend" }
+    );
+    
+    for await (const _ of interval(2000)) {
+      const msg = `Message at ${new Date().toLocaleTimeString()}`;
+      yield patchElements(
+        `<li>${msg}</li>`,
+        { selector: "#messages", mode: "append" }
+      );
+      yield patchSignals({ lastMsg: msg });
+    }
+  }),
+};
+```
+
+### 5. Progressive Enhancement
+
+```tsx
+// Slider with server sync
+<div {...$({ value: 50 })}>
+  <input {...{
+    type: "range",
+    min: "0",
+    max: "100",
+    "data-bind-value": "",
+    "data-on-load": "@get('/sse/slider')",
+    "data-on-input": "@post('/update-slider')"
+  }} />
+  <output {...{ "data-text": $`$value` }} />
+</div>
+```
+
+## Real-World Examples
+
+### Complete Counter Component
+
+```tsx
+// src/pages/counter.tsx
+import { html } from '../lib/sse';
+import { Datastar } from "../lib/datastar";
+import Shell from "../components/shell";
+
+export type Signals = {
+  counter?: number;
+};
+
+const $ = Datastar<Signals>();
+
+export const routes = {
+  "/counter": html(
+    <Shell>
+      <h1>Counter</h1>
+      <div role="group" {...$({ counter: 0 })} style={{ alignItems: "center" }}>
+        <button {...{ "data-on-click": $`$counter -= 1` }}>-</button>
+        <h2 {...{ "data-text": $`$counter` }} style={{ textAlign: "center" }} />
+        <button {...{ "data-on-click": $`$counter += 1` }}>+</button>
+      </div>
+    </Shell>
+  ),
+} as const;
+```
+
+### Live Data Dashboard
+
+```tsx
+// src/pages/dashboard.tsx
+import { html, sse, interval, patchSignals } from "../lib/sse";
+import { Datastar } from "../lib/datastar";
+
+export type Signals = {
+  cpu?: number;
+  memory?: number;
+  connections?: number;
+  lastUpdate?: string;
+};
+
+const $ = Datastar<Signals>();
+
+export const routes = {
+  "/dashboard": html(
+    <Shell>
+      <h1>System Dashboard</h1>
+      <div {...{
+        ...$({ cpu: 0, memory: 0, connections: 0 }),
+        "data-on-load": "@get('/sse/metrics')"
+      }}>
+        <div className="metric">
+          <label>CPU Usage</label>
+          <progress {...{ 
+            value: $`$cpu`, 
+            max: "100" 
+          }} />
+          <span {...{ "data-text": $`$cpu + '%'` }} />
+        </div>
+        
+        <div className="metric">
+          <label>Memory Usage</label>
+          <progress {...{ 
+            value: $`$memory`, 
+            max: "100" 
+          }} />
+          <span {...{ "data-text": $`$memory + '%'` }} />
+        </div>
+        
+        <div className="metric">
+          <label>Active Connections</label>
+          <span {...{ "data-text": $`$connections` }} />
+        </div>
+        
+        <small {...{ "data-text": $`'Last update: ' + $lastUpdate` }} />
+      </div>
+    </Shell>
+  ),
+  
+  "/sse/metrics": sse(async function* (req: Request, signals: Signals) {
+    for await (const _ of interval(5000)) {
+      const metrics = await getSystemMetrics(); // Your metrics function
+      yield patchSignals({
+        cpu: metrics.cpu,
+        memory: metrics.memory,
+        connections: metrics.connections,
+        lastUpdate: new Date().toLocaleTimeString()
+      });
+    }
+  }),
+};
+```
+
+## Best Practices
+
+### 1. Type Safety
+
+Always define signal types:
+
+```tsx
+export type Signals = {
+  // Use optional properties for flexibility
+  counter?: number;
+  message?: string;
+  loading?: boolean;
+};
+```
+
+### 2. Error Handling
+
+Handle SSE errors gracefully:
+
+```tsx
+"/sse/data": sse(async function* (req: Request, signals: Signals) {
+  try {
+    for await (const _ of interval(1000)) {
+      const data = await fetchData();
+      yield patchSignals({ data, error: null });
+    }
+  } catch (error) {
+    yield patchSignals({ 
+      error: error.message, 
+      loading: false 
+    });
+  }
+})
+```
+
+### 3. Performance Optimization
+
+- Use appropriate interval timings
+- Batch signal updates when possible
+- Clean up resources in SSE streams
+
+```tsx
+// Efficient batching
+const updates = [];
+for await (const _ of interval(100)) {
+  updates.push(await getNextUpdate());
+  
+  if (updates.length >= 10) {
+    yield patchSignals({ updates: [...updates] });
+    updates.length = 0;
+  }
+}
+```
+
+### 4. Resource Management
+
+```tsx
+"/sse/stream": sse(async function* (req: Request, signals: Signals) {
+  const controller = new AbortController();
+  
+  // Cleanup on client disconnect
+  req.signal?.addEventListener('abort', () => {
+    controller.abort();
+    // Cleanup resources
+  });
+  
+  for await (const _ of interval(1000, { signal: controller.signal })) {
+    if (controller.signal.aborted) break;
+    yield patchSignals({ timestamp: Date.now() });
+  }
+})
+```
+
+## Integration with Bun
+
+### Server Setup
+
+```ts
+// src/server.ts
+import { serve } from "bun";
+import * as Counter from "./pages/counter";
+import * as Clock from "./pages/clock";
+
+serve({
+  port: 5555,
+  development: { 
+    hmr: true, 
+    console: true 
+  },
+  routes: {
+    ...Counter.routes,
+    ...Clock.routes,
+    "/public/*": (req) => {
+      const url = new URL(req.url);
+      const requestedPath = url.pathname.slice("/public/".length);
+      // Basic security check: prevent path traversal attacks
+      if (requestedPath.includes("..")) {
+          return new Response("Forbidden", { status: 403 });
+      }
+      return new Response(Bun.file(`public/${path}`));
+    },
+  },
+  fetch() { 
+    return new Response("Not found", { status: 404 }); 
+  },
+});
+```
+
+### Development Workflow
+
+1. **Start development server:** `bun dev`
+2. **Hot reloading:** Automatic with Bun's HMR
+3. **Type checking:** Built-in TypeScript support
+
+### Performance Benefits
+
+- **Fast SSE streaming:** Bun's native ReadableStream support
+- **Efficient bundling:** Built-in transpilation and bundling
+- **Quick startup:** Bun's fast runtime initialization
+- **Memory efficient:** Optimized for server-side rendering
