@@ -69,8 +69,8 @@ Server runs on `http://localhost:5555`
 
 ```
 src/
-├── server.ts          # Main server with Bun.serve() and consolidated routes
-├── components/        # Reusable React components
+├── server.ts         # Main server with Bun.serve() and consolidated routes
+├── components/       # Reusable React components
 │   └── shell.tsx     # App shell with navigation
 ├── lib/              # Core utilities
 │   ├── datastar.ts   # Datastar expression helpers
