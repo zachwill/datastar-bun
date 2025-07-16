@@ -17,15 +17,15 @@ function FeatureList() {
     <div className="grid">
       <div>
         <h5>🚀 Server-Side Rendering</h5>
-        <p>Built with Bun's fast runtime and bundler</p>
+        <p>Built with Bun and TypeScript</p>
       </div>
       <div>
         <h5>⚡ Real-time Updates</h5>
-        <p>Server-sent events with no client polling</p>
+        <p>SSE with no client polling</p>
       </div>
       <div>
         <h5>🎯 Simple Reactive UI</h5>
-        <p>HTML attributes handle all the reactivity</p>
+        <p>Datastar handles all reactivity</p>
       </div>
     </div>
   );
@@ -52,7 +52,7 @@ export const routes = {
         <div className="grid">
           <ExampleCard
             title="Counter"
-            description="Simple counter with reactive state"
+            description="Simple +/- counter"
             path="/counter"
           />
 
@@ -64,7 +64,7 @@ export const routes = {
 
           <ExampleCard
             title="Clock"
-            description="Live clock updates from the server"
+            description="Live clock updates from server"
             path="/clock"
           />
         </div>

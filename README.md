@@ -2,6 +2,8 @@
 
 Examples of using [Datastar](https://github.com/starfederation/datastar) with [Bun](https://bun.sh/) for real-time server-sent events.
 
+![](./public/example.png)
+
 ### Simple case
 
 ```typescript
