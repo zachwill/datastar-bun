@@ -9,7 +9,7 @@ export type Signals = {
 const $ = Datastar<Signals>();
 
 export const routes = {
-  "/slider": () => html(
+  "/slider": html(
     <Shell>
       <h1>Slider</h1>
       <div {...$({ slider: 0 })}>

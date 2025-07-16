@@ -9,7 +9,7 @@ export type Signals = {
 const $ = Datastar<Signals>();
 
 export const routes = {
-  "/counter": () => html(
+  "/counter": html(
     <Shell>
       <h1>Counter</h1>
       <div role="group" {...$({ counter: 0 })} style={{ alignItems: "center" }}>

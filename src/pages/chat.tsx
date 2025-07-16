@@ -10,7 +10,7 @@ export type Signals = {
 const $ = Datastar<Signals>();
 
 export const routes = {
-  "/chat": () => html(
+  "/chat": html(
     <Shell>
       <h1>Chat</h1>
       <ul id="chat" {...{

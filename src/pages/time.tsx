@@ -9,7 +9,7 @@ export type Signals = {
 const $ = Datastar<Signals>();
 
 export const routes = {
-  "/time": () => html(
+  "/time": html(
     <Shell>
       <h1>Time</h1>
       <p id="clock"

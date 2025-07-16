@@ -32,7 +32,7 @@ function FeatureList() {
 }
 
 export const routes = {
-  "/": () => html(
+  "/": html(
     <Shell>
       <hgroup>
         <h1>Datastar + Bun</h1>
