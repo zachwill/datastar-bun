@@ -1,4 +1,4 @@
-import { html, sse, patchSignals } from "../lib/sse";
+import { html, sse, interval, patchSignals } from "../lib/sse";
 import { Datastar } from "../lib/datastar";
 import Shell from "../components/shell";
 
@@ -16,13 +16,16 @@ export const routes = {
         {...{
           ...$({ now: new Date().toISOString() }),
           "data-text": $`$now`,
-          "data-on-interval__duration.1s": "@get('/sse/time')",
+          "data-on-load": "@get('/sse/time')",
         }}>
       </p>
     </Shell>
   ),
 
-  "/sse/time": sse(async function* (req: Request, signals: Record<string, any>) {
+  "/sse/time": sse(async function* (req: Request, signals: Signals) {
     yield patchSignals({ now: new Date().toISOString() });
+    for await (const _ of interval(1000)) {
+      yield patchSignals({ now: new Date().toISOString() });
+    }
   }),
 } as const;

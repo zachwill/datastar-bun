@@ -17,15 +17,15 @@ function FeatureList() {
     <div className="grid">
       <div>
         <h5>🚀 Server-Side Rendering</h5>
-        <p>Built with Bun's lightning-fast runtime and bundler</p>
+        <p>Built with Bun's fast runtime and bundler</p>
       </div>
       <div>
         <h5>⚡ Real-time Updates</h5>
-        <p>Server-sent events for live data streaming</p>
+        <p>Server-sent events with no client polling</p>
       </div>
       <div>
-        <h5>🎯 Declarative UI</h5>
-        <p>Reactive components with simple data binding</p>
+        <h5>🎯 Simple Reactive UI</h5>
+        <p>HTML attributes handle all the reactivity</p>
       </div>
     </div>
   );
@@ -36,7 +36,7 @@ export const routes = {
     <Shell>
       <hgroup>
         <h1>Datastar + Bun</h1>
-        <p>A modern full-stack framework combining Datastar's reactive frontend with Bun's backend</p>
+        <p>Real-time web apps with server-sent events and no client-side frameworks</p>
       </hgroup>
 
       <hr />
@@ -47,24 +47,24 @@ export const routes = {
 
       <section>
         <h2>Examples</h2>
-        <p>Live examples to see Datastar in action:</p>
+        <p>Here's what you can build:</p>
 
         <div className="grid">
           <ExampleCard
             title="Counter"
-            description="A simple reactive counter demonstrating state management and event handling"
+            description="Simple counter with reactive state"
             path="/counter"
           />
 
           <ExampleCard
             title="Slider"
-            description="An animated slider with real-time updates using server-sent events"
+            description="Animated slider with server-side intervals"
             path="/slider"
           />
 
           <ExampleCard
             title="Clock"
-            description="A live clock showing real-time updates from the server"
+            description="Live clock updates from the server"
             path="/clock"
           />
         </div>
@@ -72,13 +72,13 @@ export const routes = {
         <div className="grid">
           <ExampleCard
             title="Time Display"
-            description="Multiple time formats updating in real-time"
+            description="Different time formats updating in real-time"
             path="/time"
           />
 
           <ExampleCard
             title="Chat Demo"
-            description="Real-time chat interface with live message updates"
+            description="Real-time chat with live message updates"
             path="/chat"
           />
         </div>
@@ -87,14 +87,15 @@ export const routes = {
       <hr />
 
       <section>
-        <h2>Getting Started</h2>
-        <p>This project demonstrates the integration of:</p>
+        <h2>How it works</h2>
+        <p>This project uses:</p>
         <ul>
-          <li><strong>Datastar</strong> - For reactive frontend components</li>
-          <li><strong>Bun</strong> - For fast development and runtime</li>
-          <li><strong>Server-Sent Events</strong> - For real-time communication</li>
-          <li><strong>TypeScript</strong> - For type-safe development</li>
+          <li><strong>Datastar</strong> - HTML attributes for reactivity</li>
+          <li><strong>Bun</strong> - Fast runtime and bundler</li>
+          <li><strong>Server-Sent Events</strong> - Real-time updates</li>
+          <li><strong>TypeScript</strong> - Type safety</li>
         </ul>
+        <p>No client-side JavaScript framework needed. The server handles timing with <code>interval()</code> instead of client polling.</p>
       </section>
     </Shell>
   ),

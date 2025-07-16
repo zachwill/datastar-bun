@@ -1,18 +1,12 @@
 # Datastar + Bun Examples
 
-A collection of interactive examples demonstrating how to use [Datastar](https://github.com/starfederation/datastar) with [Bun](https://bun.sh/) for building reactive web applications with server-sent events.
+Some examples of using [Datastar](https://github.com/starfederation/datastar) with [Bun](https://bun.sh/) for real-time web apps with server-sent events.
 
 ## What is Datastar?
 
-Datastar is a hypermedia-driven framework that brings reactive frontend capabilities to server-rendered applications. It allows you to build interactive web apps using declarative HTML attributes and server-side rendering, with real-time updates via Server-Sent Events.
+Datastar lets you build reactive web apps using HTML attributes and server-side rendering. Real-time updates happen via Server-Sent Events, so no client-side JavaScript framework needed.
 
 ## Getting Started
-
-### Prerequisites
-
-- [Bun](https://bun.sh/) installed on your system
-
-### Installation
 
 ```bash
 # Install dependencies
@@ -22,65 +16,72 @@ bun install
 bun dev
 ```
 
-The server will start on `http://localhost:5555`
+Server runs on `http://localhost:5555`
 
 ## Examples
 
-This project includes several interactive examples showcasing different Datastar features:
-
-- **Welcome** (`/`) - Homepage with project information
-- **Counter** (`/counter`) - Simple counter with increment/decrement buttons
-- **Chat** (`/chat`) - Real-time chat using Server-Sent Events
-- **Clock** (`/clock`) - Live updating clock display
-- **Slider** (`/slider`) - Interactive slider component
-- **Time** (`/time`) - Time display with various formatting options
+- **Welcome** (`/`) - Homepage
+- **Counter** (`/counter`) - Simple counter with buttons
+- **Chat** (`/chat`) - Real-time chat with SSE
+- **Clock** (`/clock`) - Live updating clock
+- **Slider** (`/slider`) - Interactive slider
+- **Time** (`/time`) - Time display with different formats
 
 ## Project Structure
 
 ```
 src/
-├── server.ts          # Main server with Bun.serve() and route consolidation
+├── server.ts          # Main server with Bun.serve() and consolidated routes
 ├── components/        # Reusable React components
-│   └── shell.tsx     # App shell wrapper with navigation
-├── lib/              # Core utilities and helpers
-│   ├── expr.ts       # Datastar expression language helpers
-│   ├── html.ts       # HTML response utilities
-│   └── sse.ts        # Comprehensive Server-Sent Events utilities
-└── pages/            # Individual page examples
-    ├── chat.tsx      # Real-time chat with SSE
-    ├── clock.tsx     # Live clock updates
+│   └── shell.tsx     # App shell with navigation
+├── lib/              # Core utilities
+│   ├── datastar.ts   # Datastar expression helpers
+│   └── sse.ts        # Server-Sent Events utilities
+└── pages/            # Individual examples
+    ├── chat.tsx      # Real-time chat
+    ├── clock.tsx     # Live clock
     ├── counter.tsx   # Interactive counter
-    ├── slider.tsx    # Range slider component
-    ├── time.tsx      # Time formatting examples
+    ├── slider.tsx    # Range slider
+    ├── time.tsx      # Time formatting
     └── welcome.tsx   # Welcome page
 ```
 
 ## Key Features
 
-### Server-Sent Events (SSE) Utilities
+### Server-Side Intervals (No Client Polling!)
 
-The `src/lib/sse.ts` module provides a comprehensive set of utilities for working with Datastar:
+The `interval()` function handles timing on the server, eliminating client-side polling:
 
-- **`isDatastarRequest()`** - Detect if a request is from Datastar
-- **`executeScript()`** - Execute JavaScript in the browser with optional selector targeting
-- **`patchElements()`** - Update DOM elements with multiple merge modes (outer, inner, replace, append, prepend, before, after, remove)
-- **`patchSignals()`** - Update reactive signals with optional conditional updates
-- **`readSignals()`** - Read Datastar signals from requests (GET/POST/FormData)
-- **`tryReadSignals()`** - Safe version that returns Result type
-- **`readSignalsWithDefaults()`** - Read signals with fallback defaults
-- **`sse()`** - Create Server-Sent Event responses with multiple overloads
+```ts
+"/sse/clock": sse(async function* (req: Request, signals: Signals) {
+    yield patchSignals({ time: new Date().toISOString() });
+    for await (const _ of interval(1000)) {
+        yield patchSignals({ time: new Date().toISOString() });
+    }
+}),
+```
 
-### Datastar Integration Patterns
+### SSE Utilities
 
-- **Reactive Data Binding** - Using `data-signals` for state management
-- **Event Handling** - Using `data-on-click`, `data-on-input`, etc.
-- **Real-time Updates** - Server-Sent Events for live data streaming
-- **DOM Manipulation** - Server-driven element updates and script execution
-- **Expression Language** - Datastar's reactive expression system
+The `src/lib/sse.ts` module has everything you need:
+
+- **`interval(ms)`** - Server-side timing
+- **`patchElements(html, {selector, mode})`** - Update DOM elements
+- **`patchSignals(signals)`** - Update reactive state
+- **`readSignals(req)`** - Get signals from requests
+- **`sse(async function* (req, signals) { ... })`** - Create SSE streams
+
+### Datastar Integration
+
+- **Reactive Data Binding** - `data-signals` for state
+- **Event Handling** - `data-on-click`, `data-on-input`, etc.
+- **Real-time Updates** - Server-Sent Events for live data
+- **DOM Manipulation** - Server-driven element updates
+- **Expression Language** - Datastar's reactive expressions
 
 ### Server Architecture
 
-Built with `Bun.serve()` using a consolidated routing approach:
+Built with `Bun.serve()` and consolidated routing:
 
 ```ts
 serve({
@@ -101,34 +102,52 @@ serve({
 
 ## Example Usage
 
-### Simple Counter with SSE
+### Simple Counter
 
 ```tsx
 export const routes = {
     "/counter": () => html(
-        <div data-signals='{"count": 0}'>
-            <p data-text="$count"></p>
-            <button data-on-click="post('/counter/increment')">+</button>
-            <button data-on-click="post('/counter/decrement')">-</button>
+        <div {...$({ counter: 0 })}>
+            <button {...{ "data-on-click": $`$counter -= 1` }}>-</button>
+            <h2 {...{ "data-text": $`$counter` }} />
+            <button {...{ "data-on-click": $`$counter += 1` }}>+</button>
         </div>
     ),
-    "/counter/increment": () => sse(patchSignals({ count: "$count + 1" })),
-    "/counter/decrement": () => sse(patchSignals({ count: "$count - 1" })),
 };
 ```
 
-### Real-time Chat with SSE
+### Real-time Clock
+
+```tsx
+export const routes = {
+    "/clock": () => html(
+        <Shell>
+            <h2 {...{
+                "data-text": $`$clock`,
+                "data-on-load": "@get('/sse/clock')",
+            }}>Loading...</h2>
+        </Shell>
+    ),
+    "/sse/clock": sse(async function* (req: Request, signals: Signals) {
+        yield patchSignals({ clock: new Date().toLocaleTimeString() });
+        for await (const _ of interval(1000)) {
+            yield patchSignals({ clock: new Date().toLocaleTimeString() });
+        }
+    }),
+};
+```
+
+### Real-time Chat
 
 ```tsx
 export const routes = {
     "/chat": () => html(/* chat interface */),
-    "/chat/messages": () => sse(async function* () {
-        // Stream real-time messages
-        for await (const message of messageStream) {
-            yield patchElements(
-                <div class="message">{message.text}</div>,
-                { selector: "#messages", mode: "append" }
-            );
+    "/sse/chat": sse(async function* (req: Request, signals: Signals) {
+        yield patchElements(<li>Chat starting...</li>, { selector: "#chat", mode: "prepend" });
+        for await (const _ of interval(1000)) {
+            const msg = `Ping ${new Date().toLocaleTimeString()}`;
+            yield patchElements(`<li>${msg}</li>`, { selector: "#chat", mode: "append" });
+            yield patchSignals({ lastMsg: msg });
         }
     }),
 };
@@ -136,10 +155,10 @@ export const routes = {
 
 ## Development
 
-- The server uses Bun's built-in hot reload (`bun --hot src/server.ts`)
-- Static assets are served from the `public/` directory
-- All routing is consolidated in `src/server.ts`
-- Pages export route objects for clean organization
+- Hot reload with `bun --hot src/server.ts`
+- Static assets from `public/` directory
+- All routing consolidated in `src/server.ts`
+- Pages export route objects
 
 ## Learn More
 

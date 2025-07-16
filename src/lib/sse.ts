@@ -53,7 +53,6 @@ export function executeScript(script: string, selector: string = "body") {
     );
 }
 
-
 export type Mode =
     | "outer"
     | "inner"
@@ -185,9 +184,25 @@ export async function readSignalsWithDefaults<T extends Record<string, any>>(
     }
 }
 
-export function sse(
-    ...parts: (string | AsyncGenerator<string, void, unknown>)[]
-): Response;
+/** 
+ * Simple interval helper for SSE streams
+ * Yields void at regular intervals, you control what to send
+ */
+export async function* interval(
+    ms: number,
+    options: { signal?: AbortSignal } = {}
+): AsyncGenerator<void, void, unknown> {
+    yield; // Always yield immediately
+
+    while (!options.signal?.aborted) {
+        await Bun.sleep(ms);
+        if (!options.signal?.aborted) {
+            yield;
+        }
+    }
+}
+
+// Simple overloads for the two cases you actually use
 export function sse(
     generatorFn: () => AsyncGenerator<string>
 ): () => Response;
@@ -196,48 +211,42 @@ export function sse(
 ): (req: Request) => Promise<Response>;
 
 export function sse(
-    ...parts: (string | AsyncGenerator<string, void, unknown> | Function)[]
-): Response | (() => Response) | ((req: Request) => Promise<Response>) {
-    if (parts.length === 1 && typeof parts[0] === "function") {
-        const generatorFn = parts[0] as Function;
-
-        if (generatorFn.length === 0) {
-            return () => sse(generatorFn());
-        } else {
-            return async (req: Request) => {
-                const result = await tryReadSignals(req);
-                const signals = result.success ? result.signals : {};
-
-                if (!result.success) {
-                    console.warn(`Failed to read signals: ${result.error}`);
-                }
-
-                return sse(generatorFn(req, signals));
-            };
-        }
+    generatorFn: Function
+): Function {
+    // No args = simple generator
+    if (generatorFn.length === 0) {
+        return () => {
+            const gen = generatorFn();
+            return createSSEResponse(gen);
+        };
     }
 
-    const gen: AsyncGenerator<string> =
-        parts.length === 1 && typeof parts[0] !== "string" && typeof parts[0] !== "function"
-            ? parts[0] as AsyncGenerator<string>
-            : (async function* () {
-                for (const part of parts) {
-                    if (typeof part === "string") {
-                        yield part;
-                    } else if (typeof part !== "function") {
-                        for await (const chunk of part) yield chunk;
-                    }
-                }
-            })();
+    // Has args = reads signals from request
+    return async (req: Request) => {
+        const result = await tryReadSignals(req);
+        const signals = result.success ? result.signals : {};
 
+        if (!result.success) {
+            console.warn(`Failed to read signals: ${result.error}`);
+        }
+
+        const gen = generatorFn(req, signals);
+        return createSSEResponse(gen);
+    };
+}
+
+function createSSEResponse(gen: AsyncGenerator<string>): Response {
+    // Use Bun's direct ReadableStream for immediate flushing
     const stream = new ReadableStream({
-        async start(controller) {
+        type: "direct",
+        async pull(controller) {
             try {
                 for await (const chunk of gen) {
-                    controller.enqueue(new TextEncoder().encode(chunk));
+                    controller.write(chunk);
+                    controller.flush();
                 }
             } catch (error) {
-                controller.error(error);
+                console.error("SSE stream error:", error);
             } finally {
                 controller.close();
             }

@@ -82,28 +82,38 @@ export const routes = {
 
 ## Server-Sent Events (SSE)
 
-Use the comprehensive SSE utilities in `src/lib/sse.ts`:
+The SSE utilities in `src/lib/sse.ts` handle all the Datastar protocol stuff:
 
 ```ts#example-sse.ts
-import { sse, patchElements, patchSignals, readSignals, executeScript } from "./lib/sse";
+import { sse, interval, patchElements, patchSignals, readSignals } from "./lib/sse";
 
-// Real-time updates
-"/api/stream": () => sse(async function* () {
-    while (true) {
+// Real-time updates with server-side intervals (no client polling!)
+"/api/clock": sse(async function* (req: Request, signals: Signals) {
+    yield patchSignals({ time: new Date().toISOString() });
+    for await (const _ of interval(1000)) {
         yield patchSignals({ time: new Date().toISOString() });
-        await Bun.sleep(1000);
     }
 }),
 
 // Process form data
-"/api/process": async (req: Request) => {
-    const signals = await readSignals(req);
-    return sse(patchSignals({ result: signals.value * 2 }));
-}
+"/api/process": sse(async function* (req: Request, signals: Signals) {
+    const result = signals.value * 2;
+    yield patchSignals({ result });
+}),
 
-// Execute JavaScript
-"/api/alert": () => sse(executeScript("alert('Hello!')"))
+// Execute JavaScript on the client
+"/api/alert": sse(async function* () {
+    yield executeScript("alert('Hello!')");
+})
 ```
+
+## Key SSE Functions
+
+- **`interval(ms)`** - Server-side timing, eliminates client polling
+- **`patchElements(html, {selector, mode})`** - Update DOM elements
+- **`patchSignals(signals)`** - Update reactive state
+- **`readSignals(req)`** - Get signals from request (GET/POST/FormData)
+- **`sse(async function* (req, signals) { ... })`** - Create SSE streams
 
 ## Frontend
 
@@ -148,8 +158,5 @@ root.render(<Frontend />);
 - All imports use ES modules syntax
 - SSE utilities handle all Datastar protocol requirements
 - Pages export route objects for clean organization
-
-- All imports use ES modules syntax
-- Hot reload is enabled for development
-- SSE utilities handle all Datastar protocol requirements automatically
-- Signal reading supports GET (query params), POST (JSON), and FormData formats
+- Use `data-on-load="@get('/sse/endpoint')"` instead of client-side intervals
+- Server-side `interval()` is way better than client polling
