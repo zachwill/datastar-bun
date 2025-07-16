@@ -24,7 +24,7 @@ export const routes = {
 
   "/sse/time": sse(async function* (req: Request, signals: Signals) {
     yield patchSignals({ now: new Date().toISOString() });
-    for await (const _ of interval(1000)) {
+    for await (const _ of interval(200)) {
       yield patchSignals({ now: new Date().toISOString() });
     }
   }),

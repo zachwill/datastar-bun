@@ -26,14 +26,14 @@ export const routes = {
   ),
 
   "/sse/slider": sse(async function* (req: Request, signals: Signals) {
-    const value = Number(signals.slider) || 0;
+    let value = Number(signals.slider) || 0;
     yield patchSignals({
       slider: (value + 2) % 100,
     });
     for await (const _ of interval(120)) {
-      const currentValue = Number(signals.slider) || 0;
+      value = (value + 2) % 100;
       yield patchSignals({
-        slider: (currentValue + 2) % 100,
+        slider: value,
       });
     }
   }),
