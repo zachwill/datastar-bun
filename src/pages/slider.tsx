@@ -30,7 +30,7 @@ export const routes = {
     yield patchSignals({
       slider: (value + 2) % 100,
     });
-    for await (const _ of interval(120)) {
+    for await (const _ of interval(50)) {
       value = (value + 2) % 100;
       yield patchSignals({
         slider: value,
