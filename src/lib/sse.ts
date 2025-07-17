@@ -205,7 +205,7 @@ export async function* interval(
 // Simple overloads for the two cases you actually use
 export function sse(
     generatorFn: () => AsyncGenerator<string>
-): () => Response;
+): (req: Request) => Response;
 export function sse(
     generatorFn: (req: Request, signals: Record<string, any>) => AsyncGenerator<string>
 ): (req: Request) => Promise<Response>;
@@ -215,9 +215,9 @@ export function sse(
 ): Function {
     // No args = simple generator
     if (generatorFn.length === 0) {
-        return () => {
+        return (req: Request) => {
             const gen = generatorFn();
-            return createSSEResponse(gen);
+            return createSSEResponse(gen, req.signal);
         };
     }
 
@@ -231,26 +231,80 @@ export function sse(
         }
 
         const gen = generatorFn(req, signals);
-        return createSSEResponse(gen);
+        return createSSEResponse(gen, req.signal);
     };
 }
 
-function createSSEResponse(gen: AsyncGenerator<string>): Response {
-    // Use Bun's direct ReadableStream for immediate flushing
+function createSSEResponse(gen: AsyncGenerator<string>, signal?: AbortSignal): Response {
     const stream = new ReadableStream({
-        type: "direct",
-        async pull(controller) {
+        async start(controller) {
+            const encoder = new TextEncoder();
+
+            // Handle abort signal
+            const abortHandler = () => {
+                console.log("SSE stream aborted by client");
+                if (controller.desiredSize !== null) {
+                    try {
+                        controller.close();
+                    } catch (e) {
+                        console.warn("Could not close controller on abort:", e);
+                    }
+                }
+            };
+
+            signal?.addEventListener('abort', abortHandler);
+
             try {
                 for await (const chunk of gen) {
-                    controller.write(chunk);
-                    controller.flush();
+                    // Check if aborted
+                    if (signal?.aborted) {
+                        console.log("SSE stream aborted, stopping generator");
+                        break;
+                    }
+
+                    // Check if controller is still open before enqueuing
+                    if (controller.desiredSize === null) {
+                        // Controller is closed, break out of loop
+                        break;
+                    }
+
+                    try {
+                        controller.enqueue(encoder.encode(chunk));
+                    } catch (error) {
+                        // If enqueue fails, the controller is likely closed
+                        console.warn("SSE enqueue failed (client likely disconnected):", error);
+                        break;
+                    }
                 }
             } catch (error) {
                 console.error("SSE stream error:", error);
+                // Only try to error if controller is still open
+                if (controller.desiredSize !== null) {
+                    try {
+                        controller.error(error);
+                    } catch (e) {
+                        console.warn("Could not error controller:", e);
+                    }
+                }
             } finally {
-                controller.close();
+                // Clean up abort listener
+                signal?.removeEventListener('abort', abortHandler);
+
+                // Only close if not already closed
+                if (controller.desiredSize !== null) {
+                    try {
+                        controller.close();
+                    } catch (e) {
+                        console.warn("Could not close controller:", e);
+                    }
+                }
             }
         },
+
+        cancel() {
+            // Called when client disconnects
+            console.log("SSE stream cancelled (client disconnected)");
+        }
     });
 
     return new Response(stream, {
