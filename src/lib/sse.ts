@@ -5,13 +5,6 @@ import { renderToStaticMarkup, renderToString } from "react-dom/server";
 const NEWLINE = "\n";
 const END = NEWLINE + NEWLINE;
 
-export function html(node: JSX.Element): Response {
-    return new Response(
-        renderToStaticMarkup(node),
-        { headers: { "content-type": "text/html; charset=utf-8" } },
-    );
-}
-
 function multiline(prefix: string, text: string) {
     return text
         .split(/\r?\n/)
@@ -314,4 +307,36 @@ function createSSEResponse(gen: AsyncGenerator<string>, signal?: AbortSignal): R
             Connection: "keep-alive",
         },
     });
+}
+
+// Overloads for html function
+export function html(node: JSX.Element): Response;
+export function html(
+    renderFn: (req: Request, signals: Record<string, any>) => JSX.Element
+): (req: Request) => Promise<Response>;
+
+export function html(nodeOrFn: JSX.Element | Function): Response | Function {
+    // If it's a function, return a function that reads signals and calls it
+    if (typeof nodeOrFn === 'function') {
+        return async (req: Request) => {
+            const result = await tryReadSignals(req);
+            const signals = result.success ? result.signals : {};
+
+            if (!result.success) {
+                console.warn(`Failed to read signals: ${result.error}`);
+            }
+
+            const node = nodeOrFn(req, signals);
+            return new Response(
+                renderToStaticMarkup(node),
+                { headers: { "content-type": "text/html; charset=utf-8" } },
+            );
+        };
+    }
+
+    // If it's a JSX element, return Response directly (current behavior)
+    return new Response(
+        renderToStaticMarkup(nodeOrFn),
+        { headers: { "content-type": "text/html; charset=utf-8" } },
+    );
 }
